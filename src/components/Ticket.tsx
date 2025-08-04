@@ -1,4 +1,5 @@
 import React from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface TicketProps {
   ticketId: string;
@@ -9,6 +10,7 @@ interface TicketProps {
   owner?: string;
   isValid?: boolean;
   qrCodeData?: string;
+  contractAddress?: string;
 }
 
 const Ticket: React.FC<TicketProps> = ({
@@ -19,23 +21,9 @@ const Ticket: React.FC<TicketProps> = ({
   nftId,
   owner,
   isValid = true,
-  qrCodeData
+  qrCodeData,
+  contractAddress
 }) => {
-  // Generate a simple QR-like pattern for demo purposes
-  const generateQRPattern = () => {
-    const pattern = [];
-    for (let i = 0; i < 15; i++) {
-      const row = [];
-      for (let j = 0; j < 15; j++) {
-        row.push(Math.random() > 0.5);
-      }
-      pattern.push(row);
-    }
-    return pattern;
-  };
-
-  const qrPattern = generateQRPattern();
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -72,16 +60,11 @@ const Ticket: React.FC<TicketProps> = ({
           {/* QR Code */}
           <div className="flex justify-center mb-8">
             <div className="bg-white p-6 rounded-2xl shadow-inner border border-gray-100">
-              <div className="grid grid-cols-15 gap-0.5 w-40 h-40">
-                {qrPattern.map((row, i) => 
-                  row.map((cell, j) => (
-                    <div
-                      key={`${i}-${j}`}
-                      className={`aspect-square ${cell ? 'bg-black' : 'bg-white'}`}
-                    />
-                  ))
-                )}
-              </div>
+              {qrCodeData ? (
+                <QRCodeSVG value={qrCodeData} size={160} />
+              ) : (
+                <p className="text-gray-500 text-sm">Cargando QR...</p>
+              )}
             </div>
           </div>
 
@@ -91,14 +74,21 @@ const Ticket: React.FC<TicketProps> = ({
               <span className="text-gray-500 text-sm">Ticket ID:</span>
               <span className="text-gray-900 font-medium text-sm">{ticketId}</span>
             </div>
-            
+
             {nftId && (
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-500 text-sm">NFT:</span>
                 <span className="text-gray-900 font-medium text-sm">{nftId}</span>
               </div>
             )}
-            
+
+            {contractAddress && (
+              <div className="flex justify-between items-center py-2">
+                <span className="text-gray-500 text-sm">Contrato:</span>
+                <span className="text-gray-900 font-medium text-sm truncate ml-2">{contractAddress}</span>
+              </div>
+            )}
+
             {owner && (
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-500 text-sm">Propietario:</span>
