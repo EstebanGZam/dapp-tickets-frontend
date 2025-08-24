@@ -2,7 +2,7 @@ import { ethers, BrowserProvider, Contract, Signer, Network } from "ethers";
 import EventManagerABI from "@/abis/EventManager.json";
 import EventTicketABI from "@/abis/EventTicket.json";
 
-const eventManagerAddress = "0x9FfDCbe41a99846adfd9251E5C21860F36eB3751"; // Address del eventmanager
+const eventManagerAddress = "0x9d1Bd3B6d234B09707c4Afbbc2bfADA88F792b2d"; // Address del eventmanager
 
 // --- Define our local Ganache network to prevent ENS errors ---
 const ganacheNetwork = new Network("ganache", 1337);
@@ -46,4 +46,21 @@ export const getTicketContract = (address: string): Contract => {
     ganacheNetwork // <-- This tells ethers the network doesn't have ENS
   );
   return new ethers.Contract(address, EventTicketABI.abi, provider);
+};
+
+/**
+ * Returns a READ-ONLY instance of the EventManager contract.
+ * This is optimal for fetching public data like the list of all events
+ * without requiring the user to connect their wallet.
+ */
+export const getEventManagerReadContract = (): Contract => {
+  const provider = new ethers.JsonRpcProvider(
+    "http://127.0.0.1:7545",
+    ganacheNetwork
+  );
+  return new ethers.Contract(
+    eventManagerAddress,
+    EventManagerABI.abi,
+    provider
+  );
 };
