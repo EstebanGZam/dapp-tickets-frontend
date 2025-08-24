@@ -1,37 +1,49 @@
-import { ethers, BrowserProvider, Contract, Signer } from "ethers";
+import { ethers, BrowserProvider, Contract, Signer, Network } from "ethers";
 import EventManagerABI from "@/abis/EventManager.json";
 import EventTicketABI from "@/abis/EventTicket.json";
 
-const eventManagerAddress = "0xB0Be5Dc84a8d4518b0238DFF232ba4150B0272Ff"; // Pegar dirección del event manager (al desplegar el backend)
+const eventManagerAddress = "0x9FfDCbe41a99846adfd9251E5C21860F36eB3751"; // Address del eventmanager
+
+// --- Define our local Ganache network to prevent ENS errors ---
+const ganacheNetwork = new Network("ganache", 1337);
 
 /**
- * Obtiene el proveedor y el firmante de la billetera del navegador (MetaMask).
- * Un "Signer" es necesario para enviar transacciones que modifican el estado de la blockchain.
+ * Gets a Signer from the browser wallet (MetaMask) to send transactions.
  */
 export const getSigner = async () => {
   if (typeof window.ethereum === "undefined") {
     throw new Error("No wallet detected. Please install MetaMask.");
   }
-  
-  // Usamos el proveedor inyectado por MetaMask
   const provider = new BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();
   return signer;
 };
 
 /**
- * Retorna una instancia del contrato EventManager con la que se pueden enviar transacciones.
- * @param signer El firmante (billetera) que ejecutará la transacción.
+ * Returns an instance of the EventManager contract connected to a Signer.
  */
 export const getEventManagerContract = (signer: Signer): Contract => {
   return new ethers.Contract(eventManagerAddress, EventManagerABI.abi, signer);
 };
 
 /**
- * Retorna una instancia de un contrato EventTicket para leer sus datos.
- * @param address La dirección del contrato del evento específico.
+ * Returns an instance of EventTicket connected to a Signer.
+ */
+export const getTicketContractWithSigner = (
+  address: string,
+  signer: Signer
+): Contract => {
+  return new ethers.Contract(address, EventTicketABI.abi, signer);
+};
+
+/**
+ * Returns a READ-ONLY instance of an EventTicket contract to fetch its data.
  */
 export const getTicketContract = (address: string): Contract => {
-  const provider = new ethers.JsonRpcProvider("http://127.0.0.1:7545");
+  // Use the standard JsonRpcProvider but pass our custom network definition
+  const provider = new ethers.JsonRpcProvider(
+    "http://127.0.0.1:7545",
+    ganacheNetwork // <-- This tells ethers the network doesn't have ENS
+  );
   return new ethers.Contract(address, EventTicketABI.abi, provider);
 };
