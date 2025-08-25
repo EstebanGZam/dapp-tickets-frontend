@@ -1,5 +1,7 @@
+// src/app/scan/page.tsx
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 declare global {
@@ -154,8 +156,32 @@ export default function QRScannerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex flex-col">
+      {/* --- BOTÓN DE VOLVER AÑADIDO --- */}
+      <div className="absolute top-0 left-0 p-4 z-10">
+        <Link
+          href="/"
+          className="inline-flex items-center text-white/80 hover:text-white group bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20"
+        >
+          <svg
+            className="w-5 h-5 mr-2 transition-transform group-hover:-translate-x-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M15 19l-7-7 7-7"
+            ></path>
+          </svg>
+          Volver
+        </Link>
+      </div>
+
       {/* Header */}
-      <div className="text-center py-8 px-4">
+      <div className="text-center pt-16 pb-8 px-4">
         <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
           Escanear Código QR
         </h1>

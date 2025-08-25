@@ -19,18 +19,7 @@ export default function EventList({ initialEvents }: EventListProps) {
   const checkWalletStatus = async () => {
     setIsLoadingWallet(true);
     try {
-      // Usamos un timeout corto para no bloquear la UI si MetaMask no responde
-      const signer = await Promise.race([
-        getSigner(),
-        new Promise<null>((_, reject) =>
-          setTimeout(() => reject(new Error("Timeout")), 2000)
-        ),
-      ]);
-
-      if (!signer) {
-        throw new Error("No se pudo obtener el firmante.");
-      }
-
+      const signer = await getSigner();
       const address = await signer.getAddress();
       setWalletAddress(address);
 
@@ -48,23 +37,21 @@ export default function EventList({ initialEvents }: EventListProps) {
 
   // Efecto para revisar la billetera al cargar la página
   useEffect(() => {
-    if (window.ethereum) {
-      // Request accounts and check if any are connected
-      window.ethereum
-        .request({ method: "eth_accounts" })
-        .then((accounts: string[]) => {
-          if (accounts.length > 0) {
-            checkWalletStatus();
-          } else {
-            setIsLoadingWallet(false);
-          }
-        })
-        .catch(() => {
-          setIsLoadingWallet(false);
+    const checkAccounts = async () => {
+      if (window.ethereum) {
+        const accounts = await window.ethereum.request({
+          method: "eth_accounts",
         });
-    } else {
-      setIsLoadingWallet(false);
-    }
+        if (accounts && accounts.length > 0) {
+          checkWalletStatus();
+        } else {
+          setIsLoadingWallet(false);
+        }
+      } else {
+        setIsLoadingWallet(false);
+      }
+    };
+    checkAccounts();
   }, []);
 
   // Renderiza los botones de acción basados en el estado de la billetera
@@ -95,23 +82,24 @@ export default function EventList({ initialEvents }: EventListProps) {
           </span>
         </Link>
 
-        {/* Botón Crear Evento (condicionalmente habilitado) */}
-        <Link href={isWhitelisted ? "/create-event" : "#"} passHref>
-          <span
-            className={`inline-block text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-md ${
-              isWhitelisted
-                ? "bg-purple-600 hover:bg-purple-700 cursor-pointer"
-                : "bg-purple-300 cursor-not-allowed"
-            }`}
-            title={
-              isWhitelisted
-                ? "Crear un nuevo evento"
-                : "No tienes permiso para crear eventos"
-            }
-          >
-            Crear Evento
-          </span>
-        </Link>
+        {/* Botones para usuarios en la whitelist */}
+        {isWhitelisted && (
+          <>
+            {/* Botón para Escanear QR */}
+            <Link href="/scan">
+              <span className="inline-block bg-green-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-600 transition-colors shadow-md">
+                Escanear QR
+              </span>
+            </Link>
+
+            {/* Botón Crear Evento */}
+            <Link href="/create-event">
+              <span className="inline-block bg-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors shadow-md">
+                Crear Evento
+              </span>
+            </Link>
+          </>
+        )}
       </div>
     );
   };
@@ -131,6 +119,7 @@ export default function EventList({ initialEvents }: EventListProps) {
         <div className="mt-6 sm:mt-0">{renderActionButtons()}</div>
       </header>
 
+      {/* (El resto del código de la lista de eventos permanece igual) */}
       {initialEvents.length === 0 ? (
         <div className="text-center py-20 px-4 bg-white rounded-xl shadow-sm">
           <span className="text-5xl mb-4 inline-block">🎟️</span>
