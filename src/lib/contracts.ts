@@ -9,9 +9,51 @@ import {
 import EventManagerABI from "@/abis/EventManager.json";
 import EventTicketABI from "@/abis/EventTicket.json";
 
-const eventManagerAddress = "0x93a5a1F8475182EE364A5e4c430c9dDCfe3B18F7";
+// 🎯 Configuración desde variables de entorno
+const eventManagerAddress =
+  process.env.NEXT_PUBLIC_EVENT_MANAGER_ADDRESS ||
+  "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const networkName = process.env.NEXT_PUBLIC_NETWORK_NAME || "localhost";
+const chainId = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "31337");
+const infuraProjectId = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID;
 
-const ganacheNetwork = new Network("ganache", 1337);
+// 🌐 Configuración dinámica de RPC URL según la red
+const getRpcUrl = (): string => {
+  switch (networkName.toLowerCase()) {
+    case "sepolia":
+      if (!infuraProjectId) {
+        throw new Error(
+          "NEXT_PUBLIC_INFURA_PROJECT_ID is required for Sepolia network"
+        );
+      }
+      return `https://sepolia.infura.io/v3/${infuraProjectId}`;
+
+    case "mumbai":
+    case "polygon-mumbai":
+      return "https://rpc-mumbai.maticvigil.com/";
+
+    case "localhost":
+    case "hardhat":
+    case "ganache":
+      // Para lab: usar NEXT_PUBLIC_LAB_GANACHE_URL si existe
+      return process.env.NEXT_PUBLIC_LAB_GANACHE_URL || "http://127.0.0.1:7545";
+
+    default:
+      // URL personalizada directa
+      return process.env.NEXT_PUBLIC_CUSTOM_RPC_URL || "http://127.0.0.1:7545";
+  }
+};
+
+// 🔧 Configurar red dinámica
+const rpcUrl = getRpcUrl();
+const network = new Network(networkName, chainId);
+
+console.log(`🌐 Network Config:`, {
+  name: networkName,
+  chainId,
+  rpcUrl,
+  contractAddress: eventManagerAddress,
+});
 
 /**
  * Gets a Signer from the browser wallet (MetaMask) to send transactions.
@@ -35,7 +77,8 @@ export const getSigner = async (): Promise<Signer> => {
 };
 
 export const getEventManagerReadContract = (): Contract => {
-  const provider = new ethers.JsonRpcProvider("http://127.0.0.1:7545");
+  // 🎯 Conecta dinámicamente según configuración de entorno
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
   return new ethers.Contract(
     eventManagerAddress,
     EventManagerABI.abi,
@@ -55,9 +98,17 @@ export const getTicketContractWithSigner = (
 };
 
 export const getTicketContract = (address: string): Contract => {
-  const provider = new ethers.JsonRpcProvider(
-    "http://127.0.0.1:7545",
-    ganacheNetwork
-  );
+  // 🎯 Conecta dinámicamente con la red configurada
+  const provider = new ethers.JsonRpcProvider(rpcUrl, network);
   return new ethers.Contract(address, EventTicketABI.abi, provider);
+};
+
+// 🔍 Función helper para debugging
+export const getNetworkInfo = () => {
+  return {
+    networkName,
+    chainId,
+    rpcUrl,
+    eventManagerAddress,
+  };
 };
